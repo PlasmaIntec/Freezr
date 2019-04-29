@@ -14,7 +14,7 @@ app.use('/', express.static(public));
 
 app.get('/links/:short', routes.getLink);
 
-app.get('/links/', routes.getAllLinks);
+app.get('/links', routes.getAllLinks);
 
 app.post('/links', parser.json(), routes.addLink);
 

@@ -43,6 +43,7 @@ const getAllLinks = () => {
 }
 
 const addLink = (info) => {
+	console.log('info:', info) // TODO
 	return new Promise((resolve, reject) => {
 		connect()
 		.then(db => {

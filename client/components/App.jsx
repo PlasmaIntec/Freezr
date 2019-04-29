@@ -7,15 +7,46 @@ export default class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            link: null
+            fullLink: '',
+            miniLink: '',
+            links: []
         }
     }
 
+    componentDidMount() {
+        this.updateLinks();
+    }
+
+    updateLinks = () => {
+        fetch('/links')
+        .then(res => res.json())
+        .then(links => {
+            console.log('updateLinks:', links); 
+            this.setState({ links })
+        })
+    }
+
     onChangeHandler = (e) => {
+        let fullLink = e.currentTarget.value;
+        this.setState({ fullLink });
+    }
+
+    onClickHandler = (e) => {
+        e.preventDefault();
         let hash = crypto.createHash('sha1');
-        hash.update(e.currentTarget.value);
-        let miniLink = hash.digest('hex');
-        this.setState({ link: miniLink });
+        hash.update(this.state.fullLink);
+        let miniLink = hash.digest('hex').slice(0, 5);
+        this.setState({ miniLink });
+        fetch('/links', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full: this.state.fullLink,
+                short: miniLink
+            })
+        })
+        .then(() => this.updateLinks())
+        .catch(err => console.log('error:', err))
     }
 
     render() {
@@ -23,15 +54,37 @@ export default class App extends Component {
             <Router>
                 <div>
                     <input onChange={this.onChangeHandler} type='text'></input>
+                    <button onClick={this.onClickHandler}>GENERATE MINIURL</button>
                     {
-                        this.state.link && 
+                        this.state.miniLink && 
                         <div>
-                            SHORT LINK: { this.state.link }
+                            SHORT LINK: { this.state.miniLink }
                         </div>
                     }
                 </div>
                 <Link to='/privacy-policy'>PRIVACY POLICY</Link>
-                <Route path='/:url' component={Redirect} />              
+                <Route path='/:url' component={Redirect} /> 
+                {
+                    this.state.links.length && 
+                    <table>
+                        <tr>
+                            <th>Full Link</th>
+                            <th>Short Link</th>
+                        </tr>
+                        {
+                            this.state.links.map(link => (
+                                <tr>
+                                    <td>{link.full}</td>
+                                    <td><a href={`/${link.short}`}>{link.short}</a></td>
+                                </tr>
+                            ))
+                        }
+                    </table>
+                }             
+                {
+                    !this.state.links.length &&
+                    <div>NO LINKS</div>
+                }
             </Router>
         )
     }

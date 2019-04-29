@@ -34,14 +34,21 @@ export default class App extends Component {
     onClickHandler = (e) => {
         e.preventDefault();
         let hash = crypto.createHash('sha1');
-        hash.update(this.state.fullLink);
+        let fullLink = this.state.fullLink;
+        if (fullLink.match(/^https?:\/\/.+\./i)) {
+            hash.update(fullLink);
+        } else {
+            fullLink = 'http://' + fullLink;
+            hash.update(fullLink);
+            this.setState({ fullLink });
+        }        
         let miniLink = hash.digest('hex').slice(0, 5);
         this.setState({ miniLink });
         fetch('/links', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                full: this.state.fullLink,
+                full: fullLink,
                 short: miniLink
             })
         })
@@ -53,7 +60,7 @@ export default class App extends Component {
         return (
             <Router>
                 <div>
-                    <input onChange={this.onChangeHandler} type='text'></input>
+                    <input onChange={this.onChangeHandler} type='text' value={this.state.fullLink}></input>
                     <button onClick={this.onClickHandler}>GENERATE MINIURL</button>
                     {
                         this.state.miniLink && 
